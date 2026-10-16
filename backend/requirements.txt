@@ -1,0 +1,4 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+websockets>=12
+pywinpty>=3.0,<4; sys_platform == 'win32'

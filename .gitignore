@@ -1,0 +1,32 @@
+# Frontend dependencies and build output
+node_modules/
+dist/
+.npm-cache/
+*.tsbuildinfo
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# AgentGuard runtime data, logs, and browser test artifacts
+/data/
+/backend/server.out.log*
+/.qa/
+/workspace/.agents/
+npm-debug.log*
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
