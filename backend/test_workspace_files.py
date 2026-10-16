@@ -33,6 +33,15 @@ class WorkspaceFileTests(unittest.TestCase):
 
 
 class WorkspaceEndpointTests(unittest.IsolatedAsyncioTestCase):
+    async def test_invalid_directory_block_is_broadcast_to_chat(self):
+        row = {'id': 42, 'decision': 'block', 'payload': {'reason': 'Outside workspace'}}
+        with patch.object(main, 'checked_directory', side_effect=ValueError('Outside workspace')), \
+             patch.object(main, 'audit', Mock()), patch.object(main, 'broadcast', AsyncMock()) as broadcast:
+            main.audit.append.return_value = row
+            with self.assertRaises(HTTPException):
+                await main.workspace_files(main.FileListingRequest(directory='..'))
+            broadcast.assert_awaited_once_with({'type': 'action_issue', 'data': row})
+
     async def test_policy_block_prevents_listing(self):
         with tempfile.TemporaryDirectory() as tmp:
             with patch.object(main.config, 'WORKSPACE_DIR', Path(tmp)), \

@@ -1,0 +1,32 @@
+.response-body,.message[aria-label="Workspace file listing"]{min-width:0;white-space:normal;--response-soft:var(--bg-subtle);--response-code:var(--bg-pre);--response-text:var(--text-secondary);--response-heading:var(--text-main);--response-link:var(--blue);--response-border:var(--line);color:var(--response-text)}
+.response-prose{font-size:14px;line-height:1.8;max-width:72ch;overflow-wrap:anywhere}
+.response-prose>:first-child{margin-top:0}.response-prose>:last-child{margin-bottom:0}
+.response-prose p{margin:0 0 1em;line-height:inherit}
+.response-prose :is(h1,h2,h3,h4,h5,h6){display:block;line-height:1.35;letter-spacing:-.025em;font-weight:650;color:var(--response-heading);margin:1.55em 0 .65em;scroll-margin-top:20px}
+.response-prose h1{font-size:1.8em}.response-prose h2{font-size:1.5em}.response-prose h3{font-size:1.25em}.response-prose h4{font-size:1.12em}.response-prose h5{font-size:1em}.response-prose h6{font-size:.92em;color:var(--muted)}
+.response-prose strong{display:inline;color:inherit;font-size:inherit;font-weight:650;margin:0}.response-prose em{font-style:italic}.response-prose del{color:var(--muted)}
+.response-prose a{color:var(--response-link);text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--response-link) 40%,transparent);overflow-wrap:anywhere}.response-prose a:hover{text-decoration-color:currentColor}.response-prose a:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:2px}
+.response-prose :is(ul,ol){padding-left:1.6em;margin:.8em 0 1.2em}.response-prose li{padding-left:.25em;margin:.3em 0}.response-prose li>p{margin:.35em 0}.response-prose li :is(ul,ol){margin:.3em 0 .6em}.response-prose li::marker{color:var(--muted)}
+.response-prose .contains-task-list{list-style:none;padding-left:.3em}.response-prose .task-list-item input{margin:0 .65em 0 0;accent-color:#426bc8;width:14px;height:14px;vertical-align:middle;opacity:1}
+.response-prose blockquote{margin:1.2em 0;padding:.75em 1.15em;border-left:3px solid #97aed8;background:var(--response-soft);border-radius:0 6px 6px 0;color:var(--muted)}.response-prose blockquote>:last-child{margin-bottom:0}
+.response-prose hr{border:0;border-top:1px solid var(--response-border);margin:1.8em 0}
+.response-prose :not(pre)>code{font-family:Consolas,'Cascadia Code',monospace;font-size:.9em;padding:.15em .36em;border:1px solid var(--response-border);border-radius:4px;background:var(--response-soft);color:var(--response-heading);box-decoration-break:clone}
+.response-code{border:1px solid var(--response-border);border-radius:8px;background:var(--response-code);margin:1.2em 0;overflow:hidden;min-width:0;max-width:100%}
+.code-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 13px;border-bottom:1px solid var(--response-border);font-size:11px;color:var(--muted);background:var(--response-soft)}
+.response-code pre{background:transparent;border:0;border-radius:0;margin:0;padding:17px;max-height:480px;overflow:auto;white-space:pre;overflow-wrap:normal;font-size:12px;line-height:1.75;tab-size:4;color:var(--response-text)}
+.response-code code{font-family:Consolas,'Cascadia Code',monospace;font-size:inherit}.code-line span{color:var(--shiki-light);font-style:var(--shiki-light-font-style);font-weight:var(--shiki-light-font-weight);text-decoration:var(--shiki-light-text-decoration)}
+.response-table{margin:1.3em 0;border:1px solid var(--response-border);border-radius:8px;overflow-x:auto;max-width:100%}.response-table table{width:100%;border-collapse:collapse;font-size:12px;line-height:1.65}.response-table th{background:var(--response-soft);font-weight:650;color:var(--response-heading)}.response-table :is(th,td){text-align:left;padding:11px 14px;border-bottom:1px solid var(--response-border);min-width:110px;vertical-align:top}.response-table tr:last-child td{border-bottom:0}.response-table tbody tr:hover{background:var(--response-soft)}
+.response-prose .katex-display{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:12px 4px;margin:1.2em 0}.response-prose .katex{font-size:1.12em}.response-prose .katex-error{color:#a23d4e;font-family:Consolas,monospace;font-size:12px}
+.response-actions{display:flex;gap:8px;align-items:center;margin-top:16px;padding-top:5px;flex-wrap:wrap}.response-actions button,.code-toolbar button{font-size:11px;min-height:30px;padding:5px 8px;background:transparent;border:1px solid transparent;color:var(--muted);font-weight:400}.response-actions button:hover,.code-toolbar button:hover{color:var(--response-heading);background:var(--response-soft);border-color:var(--response-border)}
+.response-streaming{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;margin-top:14px}.response-streaming>span{width:6px;height:6px;border-radius:50%;background:var(--blue)}
+.response-loading,.thinking-status{font-size:12px;color:var(--muted);padding:12px 0}
+.response-notice{padding:15px 17px;border:1px solid var(--response-border);border-left:3px solid #5f86d3;border-radius:6px;margin:1.2em 0;background:var(--response-soft)}.response-notice>strong{display:block!important;margin-bottom:5px!important}.response-notice.success{border-left-color:#398769}.response-notice.warning{border-left-color:#b9872e}.response-notice p{white-space:pre-wrap;margin:0}
+.response-details{padding:0 15px;border:1px solid var(--response-border)!important;border-radius:6px;margin:1.2em 0;background:var(--response-soft)}.response-details summary{font-size:13px;font-weight:600;padding:13px 0}.response-details p{white-space:pre-wrap;font-size:13px;padding-bottom:12px}
+[data-theme=dark] .code-line span{color:var(--shiki-dark);font-style:var(--shiki-dark-font-style);font-weight:var(--shiki-dark-font-weight);text-decoration:var(--shiki-dark-text-decoration)}
+[data-theme=dark] .response-prose .katex-error{color:#ff9dab}
+@media(max-width:650px){.response-prose{font-size:13px;line-height:1.8}.response-code pre{padding:13px;font-size:11px}.response-table :is(th,td){padding:9px 11px}.response-prose h1{font-size:1.6em}}
+.response-code,.response-table{border-radius:10px}
+.code-toolbar{padding:10px 14px;font-size:12px}
+.response-actions button,.code-toolbar button{min-height:36px;font-size:12px;border-radius:6px}
+.response-table td{font-variant-numeric:tabular-nums}
+@media(max-width:550px){.response-actions button,.code-toolbar button{min-height:44px}.response-prose{font-size:14px}}

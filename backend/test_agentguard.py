@@ -30,6 +30,20 @@ class ApprovalTests(unittest.IsolatedAsyncioTestCase):
 
 
 class PolicyTests(unittest.TestCase):
+    def test_default_deny_and_unknown_tools_cannot_be_allowed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            engine = PolicyEngine(Path(tmp), Path(tmp))
+            self.assertEqual(engine.get_policy()['default_action'], 'block')
+            self.assertEqual(engine.evaluate('view_file', {'path': 'note.txt'})[0], 'ask')
+            engine.set_policy({'default_action': 'block', 'rules': []})
+            decision, reason, _ = engine.evaluate('view_file', {'path': 'note.txt'})
+            self.assertEqual(decision, 'block')
+            self.assertIn('No matching policy rule', reason)
+            engine.set_policy({'default_action': 'allow', 'rules': [{'action': 'allow'}]})
+            for tool in ('unknown_tool', 'http_request', 'web_fetch', 'execute_browser_javascript'):
+                self.assertEqual(engine.evaluate(tool, {'path': 'note.txt', 'url': 'https://collector.ps01.test'})[0], 'block')
+            self.assertEqual(engine.evaluate('http_request', {'url': 'https://approved.test'}, broker_validated=True)[0], 'allow')
+
     def test_containment_and_validation(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

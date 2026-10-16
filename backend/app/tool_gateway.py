@@ -137,9 +137,7 @@ class ToolGateway:
             if not target.is_dir():
                 raise ValueError('The requested workspace path is not a directory')
             normalized = {'path': str(target)}
-            # This marker is added by the trusted tool adapter, never accepted
-            # from model arguments. It opts this bounded metadata request into
-            # the same default-Ask convenience as validated shell listings.
+            # Trusted adapter metadata; ordinary explicit policy rules apply.
             return normalized, 'list_dir', {'Directory': str(target), '_agentguard_workspace_metadata': True}
         if tool == 'shell':
             if set(args) != {'command'} or not isinstance(args['command'], str):
@@ -166,9 +164,10 @@ class ToolGateway:
         try:
             normalized, policy_tool, policy_args = self.normalize(tool, args)
         except (ValueError, OSError, TypeError, RuntimeError) as exc:
-            await record('policy_eval', {'reason': str(exc), 'attribution': 'AGENTGUARD_POLICY_BLOCK'}, 'block')
+            row = await record('policy_eval', {'reason': str(exc), 'attribution': 'AGENTGUARD_POLICY_BLOCK'}, 'block')
+            await self.broadcast({'type': 'action_issue', 'data': row})
             return {'ok': False, 'attribution': 'AGENTGUARD_POLICY_BLOCK', 'reason': str(exc), 'audit_ids': ids}
-        decision, reason, rule = self.policy.evaluate(policy_tool, policy_args)
+        decision, reason, rule = self.policy.evaluate(policy_tool, policy_args, broker_validated=tool == 'http_request')
         await record('policy_eval', {'normalized': display_args(normalized), 'reason': reason, 'rule_id': rule}, decision)
         if decision == 'ask':
             async def pending(rec):
@@ -176,19 +175,26 @@ class ToolGateway:
                 await self.broadcast({'type': 'approval', 'data': rec})
             approval = await self.approvals.request(tool, display_args(normalized), reason, on_pending=pending)
             decision = approval['decision']
+            if decision == 'block':
+                reason = ('Approval timed out.' if approval.get('decided_by') == 'timeout'
+                          else 'You blocked this action.') + ' Policy reason: ' + approval['reason']
             await record('approval_decided', approval, decision)
             await self.broadcast({'type': 'approval', 'data': approval})
         if decision == 'allow':
             try:
                 # Never release stale targets or newly blocked policy after waiting.
                 fresh, _, _ = self.normalize(tool, args)
-                if fresh != normalized or self.policy.evaluate(policy_tool, policy_args)[0] == 'block':
+                current, current_reason, _ = self.policy.evaluate(policy_tool, policy_args, broker_validated=tool == 'http_request')
+                if fresh != normalized:
                     raise ValueError('Target or policy changed while awaiting approval')
+                if current == 'block':
+                    raise ValueError(current_reason)
             except (ValueError, OSError, RuntimeError) as exc:
                 decision, reason = 'block', str(exc)
         if decision != 'allow':
-            await record('execution_skipped', {'reason': reason, 'attribution': 'AGENTGUARD_POLICY_BLOCK'}, 'block')
-            return {'ok': False, 'attribution': 'AGENTGUARD_POLICY_BLOCK', 'audit_ids': ids}
+            row = await record('execution_skipped', {'reason': reason, 'attribution': 'AGENTGUARD_POLICY_BLOCK'}, 'block')
+            await self.broadcast({'type': 'action_issue', 'data': row})
+            return {'ok': False, 'attribution': 'AGENTGUARD_POLICY_BLOCK', 'reason': reason, 'audit_ids': ids}
         try:
             if tool == 'http_request':
                 probe = await self.run_worker('__probe', {})

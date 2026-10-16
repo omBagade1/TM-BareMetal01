@@ -31,7 +31,7 @@ class ListingAccessTests(unittest.TestCase):
             access = {'command': 'C:/app/list-workspace.cmd'}
             args = {'CommandLine':access['command'], 'Cwd':str(workspace)}
             with patch('app.policy.load_listing_access', return_value=access):
-                self.assertEqual(engine.evaluate('run_command', args)[0], 'allow')
+                self.assertEqual(engine.evaluate('run_command', args)[0], 'ask')
                 for change in ({'Cwd':str(root)}, {'Cwd':'..'}, {'Cwd':None},
                                {'CommandLine':access['command']+' extra'},
                                {'CommandLine':access['command']+'; Get-Content private.txt'},

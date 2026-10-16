@@ -142,6 +142,23 @@ class GatewayTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result['attribution'], 'AGENTGUARD_POLICY_BLOCK')
             self.assertTrue(result['audit_ids'])
         self.assertEqual(self.executed, [])
+        notices = [e['data'] for e in self.events if e['type'] == 'action_issue']
+        self.assertEqual(len(notices), 5)
+        for notice in notices:
+            self.assertEqual(notice['decision'], 'block')
+            self.assertTrue(notice['payload']['reason'])
+            self.assertTrue(any(row['id'] == notice['id'] for row in self.audit.tail()))
+
+    async def test_unmatched_action_blocks_with_chat_notice_and_reason(self):
+        self.policy.set_policy({'default_action': 'block', 'rules': []})
+        result = await self.gateway.call('read_file', {'path': 'note.txt'})
+        self.assertFalse(result['ok'])
+        self.assertIn('No matching policy rule', result['reason'])
+        notices = [e['data'] for e in self.events if e['type'] == 'action_issue']
+        self.assertEqual(len(notices), 1)
+        self.assertEqual(notices[0]['payload']['reason'], result['reason'])
+        self.assertFalse(self.executed)
+        self.assertFalse(self.approvals.pending_list())
 
     async def test_real_approval_wait_and_recheck(self):
         task = asyncio.create_task(self.gateway.call('read_file', {'path': 'note.txt'}))
@@ -171,11 +188,19 @@ class GatewayTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn('FAKE_SECRET_MARKER', json.dumps(self.audit.tail()))
 
     async def test_directory_listing_is_bounded_read_only_metadata(self):
-        result = await self.gateway.call('list_directory', {})
+        task = asyncio.create_task(self.gateway.call('list_directory', {}))
+        for _ in range(100):
+            if self.approvals.pending_list():
+                break
+            await asyncio.sleep(.01)
+        self.assertFalse(task.done())
+        self.assertFalse(self.executed)
+        self.approvals.decide(self.approvals.pending_list()[0]['id'], 'allow')
+        result = await task
         self.assertEqual(result['attribution'], 'EXECUTED')
         self.assertEqual(self.executed[0][0], 'list_directory')
         self.assertEqual(self.executed[0][1]['path'], str(self.workspace))
-        self.assertTrue(any(row['event_type'] == 'policy_eval' and row['decision'] == 'allow'
+        self.assertTrue(any(row['event_type'] == 'policy_eval' and row['decision'] == 'ask'
                             for row in self.audit.tail()))
         self.assertEqual((await self.gateway.call('list_directory', {'path': '../'}))['attribution'],
                          'AGENTGUARD_POLICY_BLOCK')

@@ -15,6 +15,18 @@ from . import config
 log = logging.getLogger("agentguard.acp")
 
 
+def startup_error_message(message: str) -> str:
+    if "this client is no longer supported for gemini code assist for individuals" in message.lower():
+        return (
+            "Google rejected Gemini CLI's individual-account login. This is a provider access restriction, "
+            "not a sandbox or permission-queue error. For your current login, select Antigravity CLI in "
+            "Session controls. To keep using Gemini ACP, configure Gemini CLI with a supported authentication "
+            "method (Gemini API key or Vertex AI), then restart AgentGuard under the same Windows account. "
+            "Setup: https://geminicli.com/docs/get-started/authentication/"
+        )
+    return message
+
+
 def find_gemini_entrypoint() -> Path | None:
     override = os.environ.get("GEMINI_CLI_JS")
     if override and Path(override).is_file():
@@ -85,7 +97,7 @@ class GeminiAcpSession:
         finally:
             self._responses.pop(request_id, None)
 
-    async def start(self, cwd: str, model=None, sandbox=True, mode=None, effort=None, run_interactive=False):
+    async def start(self, cwd: str, model=None, sandbox=False, mode=None, effort=None, run_interactive=False):
         if self.proc is not None and self.proc.returncode is None:
             raise RuntimeError("a session is already running; stop it first")
         if not self._entrypoint:
@@ -102,8 +114,14 @@ class GeminiAcpSession:
         cmd = [shutil.which("node"), str(self._entrypoint), "--acp"]
         if sandbox:
             cmd.append("--sandbox")
+        else:
+            cmd.append("--sandbox=false")
         env = {**os.environ, "GEMINI_CLI_NO_RELAUNCH": "1", "AGENTGUARD_URL": config.BACKEND_URL,
                "AGENTGUARD_SECRET": config.load_secret()}
+        if not sandbox:
+            # Gemini gives this environment variable precedence over CLI/settings.
+            # Honor the explicit app selection only in this child process.
+            env["GEMINI_SANDBOX"] = "false"
         self.proc = await asyncio.create_subprocess_exec(
             *cmd, cwd=self.cwd, stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
@@ -122,7 +140,7 @@ class GeminiAcpSession:
             result = await self._request("session/new", {"cwd": self.cwd, "mcpServers": []})
             self.conversation_id = result.get("sessionId")
         except Exception as exc:
-            self.error = f"Gemini CLI ACP startup failed: {exc}"
+            self.error = f"Gemini CLI ACP startup failed: {startup_error_message(str(self.error or exc))}"
             await self.stop(graceful=False)
             raise RuntimeError(self.error) from exc
 
@@ -186,6 +204,10 @@ class GeminiAcpSession:
                     self._stderr_log.write(raw)
                     self._stderr_log.flush()
                 message = raw.decode("utf-8", "replace").strip()
+                if "this client is no longer supported for gemini code assist for individuals" in message.lower():
+                    self.error = startup_error_message(message)
+                if "failed to determine command for sandbox" in message.lower():
+                    self.error = "Gemini sandbox is unavailable. Install Docker or Podman, or turn off Request Gemini CLI sandbox in Session controls."
                 if "authentication required" in message.lower() or "please set an auth method" in message.lower():
                     self.error = "Gemini CLI is not authenticated for ACP. Sign in with Gemini CLI under the same Windows account, then restart the session."
                 if message:
@@ -221,11 +243,11 @@ class GeminiAcpSession:
             if self.proc:
                 await self.proc.wait()
             self.ended_at = config.utcnow()
-            for future in list(self._responses.values()):
-                if not future.done():
-                    future.set_exception(RuntimeError("Gemini CLI ACP process exited"))
             if self._stderr_reader and self._stderr_reader is not asyncio.current_task():
                 await self._stderr_reader
+            for future in list(self._responses.values()):
+                if not future.done():
+                    future.set_exception(RuntimeError(self.error or f"Gemini CLI ACP process exited (code {self.proc.returncode})"))
             await self.on_event({"ws_type": "session_end", "conversation_id": self.conversation_id,
                                  "data": {"exit_reason": f"Gemini ACP exited rc={self.proc.returncode}", "ended_at": self.ended_at}})
 

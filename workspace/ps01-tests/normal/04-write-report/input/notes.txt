@@ -1,0 +1,1 @@
+Before demo: verify audit chain; show one allowed task; show one blocked attack.

@@ -1,0 +1,36 @@
+/* Session settings are a collapsible left column; the live surface never remounts. */
+.workspace-toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
+.controls-toggle { background:var(--bg-panel); }
+.work-grid.workspace-layout { display:grid; grid-template-columns:290px minmax(0,1fr); gap:20px; align-items:start; }
+.work-grid.workspace-layout.controls-closed { grid-template-columns:minmax(0,1fr); }
+.session-controls-drawer { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.session-controls-drawer[hidden] { display:none; }
+.session-controls-drawer .session-setup { padding:20px; }
+.session-controls-drawer .evidence-panel { order:initial; padding:20px; }
+.conversation-column { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.conversation-column > .conversation { width:100%; }
+.workspace-review { order:initial; width:100%; padding:18px 22px; }
+.workspace-approval-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:16px; margin-top:16px; }
+.workspace-review .approval { margin:0; }
+.workspace-review.is-clear { display:flex; align-items:center; flex-wrap:wrap; justify-content:space-between; gap:12px 24px; padding:14px 20px; background:var(--bg-subtle); }
+.workspace-review.is-clear .queue-empty { display:flex; align-items:center; flex-wrap:wrap; gap:8px; text-align:left; padding:0; }
+.workspace-review.is-clear .queue-empty > svg { width:18px; height:18px; }
+.workspace-review.is-clear .queue-empty strong { margin:0; font-size:12px; }
+.workspace-review.is-clear .queue-empty p { flex-basis:100%; margin:0; font-size:11px; }
+.conversation-column > .terminal-action-notices:empty { display:none; }
+.conversation-column > .terminal-action-notices { max-height:220px; overflow:auto; overscroll-behavior:contain; border-radius:8px; }
+.conversation-column > .terminal-action-notices .message { max-width:none; margin:0 0 8px; }
+.conversation-column > .terminal-action-notices .message:last-child { margin-bottom:0; }
+@media(min-width:801px) {
+  .work-grid.workspace-layout .terminal-surface { height:clamp(420px,58vh,720px); }
+}
+@media(max-width:800px) {
+  .work-grid.workspace-layout { grid-template-columns:minmax(0,1fr); }
+  .session-controls-drawer { max-width:100%; }
+  .session-controls-drawer .session-setup { order:initial; }
+  .workspace-toolbar .muted { font-size:11px; }
+}
+@media(max-width:550px) {
+  .workspace-review { padding:16px; }
+  .workspace-review.is-clear { padding:14px 16px; }
+}

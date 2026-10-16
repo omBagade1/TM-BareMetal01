@@ -6,10 +6,11 @@ import re
 from pathlib import Path
 from .listing_access import load_listing_access, is_listing_command
 from .command_boundary import checked_path, command_boundary, EXECUTION_TOOLS, protected_parts
+from .content_guard import inspect_read
 
 DEFAULT_POLICY = {
     "version": 1,
-    "default_action": "ask",
+    "default_action": "block",
     "ultra_security": False,
     "note": "Policy engine. default_action is used when no rule matches. "
             "Hard workspace/credential boundaries and command eligibility run before allow/ask rules.",
@@ -45,6 +46,16 @@ DEFAULT_POLICY = {
             "reason": "Example: allowlist of safe commands (substring match).",
             "command": "git status",
             "tools": ["run_command"],
+        },
+        {
+            "id": "review-workspace-operations",
+            "enabled": True,
+            "action": "ask",
+            "reason": "Validated workspace operation requires your approval.",
+            "tools": ["view_file", "read_file", "list_dir", "grep_search", "find_by_name",
+                      "search_files", "write_to_file", "create_file", "replace_file_content",
+                      "multi_replace_file_content", "edit_file", "sed_file", "notebook_edit",
+                      "delete_file", "remove_file", "run_command"],
         },
     ],
 }
@@ -243,11 +254,18 @@ class PolicyEngine:
         except (OSError, ValueError, RuntimeError):
             return False
 
-    def evaluate(self, tool: str, args: dict):
+    def evaluate(self, tool: str, args: dict, *, broker_validated: bool = False):
+        if not isinstance(tool, str) or not tool:
+            return 'block', 'A recognized tool name is required.', '__unsupported_tool'
         if not isinstance(args, dict):
             return 'block', 'Tool arguments must be an object.', '__invalid_arguments'
         if tool == 'manage_task' and str(args.get('Action', '')).lower() == 'send_input':
             return 'block', 'Sending input to an existing shell bypasses command validation.', '__command_boundary'
+        if tool == 'http_request':
+            if not broker_validated:
+                return 'block', 'Network access requires the validated allowlisted HTTP broker.', '__network_boundary'
+        elif tool not in FILE_TOOLS | EXECUTION_TOOLS or tool == 'execute_browser_javascript':
+            return 'block', 'Tool is not supported by the AgentGuard policy gate; execution is blocked.', '__unsupported_tool'
         if bool(self.data.get("ultra_security", False)) and is_deletion_operation(tool, args):
             return 'block', 'Destructive file deletion is prohibited in Ultra Security mode.', '__ultra_security'
         listing_allowed = False
@@ -278,6 +296,13 @@ class PolicyEngine:
                     checked_path(self.workspace, value, cwd=cwd)
             except (ValueError, TypeError, OSError, RuntimeError) as exc:
                 return 'block', str(exc), '__workspace_containment'
+        if not self._is_builtin_skill_read(tool, args):
+            try:
+                content_reason = inspect_read(self.workspace, tool, args)
+            except (OSError, ValueError, TypeError, RuntimeError):
+                return 'block', 'Source content inspection failed; the read is blocked.', '__content_inspection'
+            if content_reason:
+                return 'block', content_reason, '__content_inspection'
         rules = self.data.get("rules") or []
         for rule in rules:
             if not rule.get("enabled", True):
@@ -287,8 +312,6 @@ class PolicyEngine:
                 continue
             if self._match_rule(rule, tool, args):
                 return action, rule.get("reason") or "Matched policy rule", rule.get("id", "rule")
-        if listing_allowed:
-            return 'allow', 'Read-only workspace metadata helper.', '__workspace_listing'
         path = extract_path(tool, args)
         resolved = str(self.workspace / path) if path and not os.path.isabs(path) else path
         if resolved and tool in FILE_TOOLS and not is_within(resolved, str(self.workspace)):
@@ -297,17 +320,6 @@ class PolicyEngine:
             if self.data.get("default_action") == "block":
                 return 'block', 'Default policy action', '__default'
             return 'ask', 'Workspace file deletion requires user approval.', '__workspace_file_delete'
-        default = self.data.get("default_action", "ask")
-        if default == 'ask' and tool in EXECUTION_TOOLS and not listing_allowed:
-            # The full command already passed command_boundary, including path,
-            # recursion and projection validation. Explicit rules above still win.
-            command = args.get('CommandLine', args.get('command', '')).strip()
-            operation = command.split()[0].lower() if command else ''
-            if operation in ('get-childitem', 'get-location', 'pwd'):
-                return 'allow', 'Validated read-only workspace metadata; no AgentGuard approval needed.', '__workspace_metadata'
-        if (default == 'ask' and tool == 'list_dir'
-                and args.get('_agentguard_workspace_metadata') is True):
-            # Read-only, one-level metadata only. The caller validates the actual
-            # directory and the isolated worker caps enumeration before access.
-            return 'allow', 'Validated immediate workspace directory metadata; no shell commands or file contents.', '__workspace_metadata'
-        return default, "Default policy action", "__default"
+        default = self.data.get("default_action", "block")
+        return default, ("No matching policy rule permits or offers review for this action."
+                         if default == 'block' else "Default policy action"), "__default"

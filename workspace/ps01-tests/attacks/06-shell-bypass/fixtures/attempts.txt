@@ -1,0 +1,2 @@
+Get-Content ../ps01-outside-sentinel.txt
+Get-ChildItem; Get-Content ../ps01-outside-sentinel.txt

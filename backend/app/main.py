@@ -225,6 +225,7 @@ class SessionStart(BaseModel):
     cwd: str | None = None
     model: str | None = None
     sandbox: bool = True
+    acp_sandbox: bool = False
     mode: str | None = None
     effort: str | None = None
     interactive: bool = False
@@ -378,7 +379,7 @@ async def _session_start(body: SessionStart):
             await session.start(str(cwd), model=body.model)
         elif body.provider == "gemini-acp":
             session = GeminiAcpSession(handle_event, handle_acp_permission)
-            await session.start(str(cwd), sandbox=body.sandbox)
+            await session.start(str(cwd), sandbox=body.acp_sandbox)
         elif body.provider == "agy":
             session = AgyTerminalSession(handle_event) if body.interactive else AgySession(handle_event)
             await session.start(str(cwd), model=body.model, sandbox=body.sandbox, mode=body.mode,
@@ -409,6 +410,8 @@ async def handle_acp_permission(params: dict) -> str:
         tool = "run_command"
         if "CommandLine" not in args and isinstance(args.get("command"), str):
             args["CommandLine"] = args["command"]
+        if "Cwd" not in args:
+            args["Cwd"] = args.get("cwd", getattr(session, "cwd", None) or str(policy.workspace))
     elif kind in ("edit", "delete"):
         tool = "write_to_file" if kind == "edit" else "delete_file"
     elif kind == "read":
@@ -416,11 +419,8 @@ async def handle_acp_permission(params: dict) -> str:
     elif kind == "search":
         tool = "grep_search"
     else:
-        # Preserve workspace containment for filesystem-like ACP calls even
-        # when a Gemini CLI release introduces a new tool title/kind.
-        path_fields = {"AbsolutePath", "FilePath", "TargetFile", "File", "Path", "Root",
-                       "WorkingDirectory", "file_path", "dir_path", "path", "cwd"}
-        tool = "view_file" if any(key in args for key in path_fields) else title
+        # A path field alone does not establish that an unknown action is a read.
+        tool = "unsupported_acp_tool"
     args.setdefault("toolSummary", title)
     decision, reason, rule_id = policy.evaluate(tool, args)
     record = audit.append("policy_eval", {"source": "gemini_acp", "tool": tool, "args": args,
@@ -438,6 +438,13 @@ async def handle_acp_permission(params: dict) -> str:
                               decision=rec["decision"])
         await broadcast_status()
         decision = rec["decision"]
+    if decision == "allow":
+        current, current_reason, current_rule = policy.evaluate(tool, args)
+        if current == "block":
+            decision = "block"
+            record = audit.append("policy_eval", {"source": "gemini_acp", "tool": tool, "args": args,
+                                  "decision": decision, "reason": current_reason, "rule_id": current_rule},
+                                  decision=decision)
     if decision == "block":
         await broadcast({"type": "action_issue", "data": record})
     return decision
@@ -481,7 +488,9 @@ async def workspace_files(body: FileListingRequest):
     try:
         directory = checked_directory(config.WORKSPACE_DIR, body.directory)
     except (OSError, ValueError, RuntimeError) as exc:
-        audit.append("workspace_listing_blocked", {"directory": body.directory, "reason": str(exc)}, decision="block")
+        record = audit.append("workspace_listing_blocked", {"tool": "list_dir", "directory": body.directory,
+                                                            "reason": str(exc)}, decision="block")
+        await broadcast({"type": "action_issue", "data": record})
         raise HTTPException(status_code=400, detail=str(exc))
     args = {"Directory": str(directory), "toolSummary": "List immediate workspace files and sizes"}
     audit.append("tool_call", {"tool": "list_dir", "parameters": args, "source": "dashboard"})

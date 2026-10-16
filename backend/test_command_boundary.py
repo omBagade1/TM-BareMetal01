@@ -29,13 +29,13 @@ class CommandBoundaryTests(unittest.TestCase):
         for command in ('Get-ChildItem', 'Get-ChildItem -Force', 'Get-ChildItem -Path . -Name',
                         'Get-Content test.txt', 'Get-Content -Raw -LiteralPath "notes with spaces.txt"'):
             with self.subTest(command=command):
-                self.assertEqual(self.command(command)[0], 'ask' if command.startswith('Get-Content') else 'allow')
+                self.assertEqual(self.command(command)[0], 'ask')
 
     def test_bounded_directory_listing_and_location(self):
         (self.workspace / 'ps01-tests' / 'normal').mkdir(parents=True)
         for command in ('Get-Location', 'pwd', 'Get-ChildItem -Directory -Recurse -Depth 2',
                         'Get-ChildItem ps01-tests -Directory -Depth 3 -Name'):
-            self.assertEqual(self.command(command)[0], 'allow', command)
+            self.assertEqual(self.command(command)[0], 'ask', command)
         for command in ('Get-Location ..', 'pwd; Get-Content .env',
                         'Get-ChildItem -Directory -Recurse', 'Get-ChildItem -Directory -Depth 4',
                         'Get-ChildItem -Depth 2', 'Get-ChildItem -Directory -File -Depth 2',
@@ -48,7 +48,7 @@ class CommandBoundaryTests(unittest.TestCase):
 
     def test_listing_name_projection_is_not_general_pipeline_permission(self):
         for suffix in ('Name', '-Property Name', '-ExpandProperty Name'):
-            self.assertEqual(self.command(f'Get-ChildItem -Path . -Directory | Select-Object {suffix}')[0], 'allow')
+            self.assertEqual(self.command(f'Get-ChildItem -Path . -Directory | Select-Object {suffix}')[0], 'ask')
         self.engine.data = {'default_action': 'allow', 'rules': []}
         for command in ('Get-ChildItem .. | Select-Object Name',
                         'Get-ChildItem .env | Select-Object Name',
@@ -113,7 +113,7 @@ class CommandBoundaryTests(unittest.TestCase):
         for cmd in ('Remove-Item test.txt', 'del test.txt', 'rm test.txt', 'Remove-Item -Force test.txt'):
             decision, reason, rule_id = self.command(cmd)
             self.assertEqual(decision, 'ask', cmd)
-            self.assertEqual(rule_id, '__workspace_file_delete', cmd)
+            self.assertEqual(rule_id, 'review-workspace-operations', cmd)
 
         # Dangerous or invalid deletions are still blocked in standard mode
         (self.workspace / 'subdir').mkdir(exist_ok=True)
@@ -134,7 +134,7 @@ class CommandBoundaryTests(unittest.TestCase):
         self.assertEqual(self.engine.evaluate('delete_file', {'AbsolutePath': str(self.workspace / 'test.txt')})[0], 'block')
 
         # Non-deletion commands remain functional under Ultra Security mode
-        self.assertEqual(self.command('Get-ChildItem')[0], 'allow')
+        self.assertEqual(self.command('Get-ChildItem')[0], 'ask')
         self.assertEqual(self.command('Get-Content test.txt')[0], 'ask')
 
     def test_file_tools_check_every_target_before_allow_rules(self):

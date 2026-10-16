@@ -1,0 +1,148 @@
+/* Apple Design Theme & Component Integration */
+
+/* 1. Theme Selector Control */
+.theme-select {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto;
+  margin-right: 18px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.theme-select select {
+  width: auto;
+  border: 0;
+  background: transparent;
+  padding: 6px 8px;
+  font-size: 11.5px;
+  margin: 0;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.theme-select select:hover {
+  background: var(--bg-control-hover);
+  color: var(--text-main);
+}
+
+.theme-select option {
+  background: var(--bg-panel);
+  color: var(--text-main);
+}
+
+/* 2. Conversation & Scroll Structure */
+.messages {
+  min-height: 0;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  overflow-anchor: none;
+}
+
+.messages > div {
+  min-width: 0;
+}
+
+.conversation {
+  position: relative;
+  height: clamp(560px, 72vh, 800px);
+  min-width: 0;
+}
+
+.message {
+  max-width: 72ch;
+  margin: 0 auto;
+  padding: 16px 0 26px;
+}
+
+.message.user {
+  margin-left: auto;
+  max-width: 64ch;
+}
+
+.message .user-content {
+  font-size: 14px;
+}
+
+.message-author {
+  letter-spacing: -0.01em;
+}
+
+.jump-latest {
+  align-self: center;
+  position: absolute;
+  bottom: 150px;
+  z-index: 5;
+  font-size: 11.5px;
+  font-weight: 550;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-panel);
+  color: var(--text-main);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-float);
+  transition: transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 150ms ease;
+}
+
+.jump-latest:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.jump-latest:active {
+  transform: scale(0.97);
+}
+
+.composer {
+  flex-shrink: 0;
+}
+
+.breadcrumb {
+  margin-right: 12px;
+}
+
+/* 3. Dark Theme Specific Refinements */
+[data-theme="dark"] .theme-select option {
+  background: #112035;
+  color: #f1f6fd;
+}
+
+[data-theme="dark"] .zipper-thumb {
+  background: #1a2c45;
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .zipper-thumb:hover,
+[data-theme="dark"] .zipper-thumb.dragging {
+  background: #243b5c;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+[data-theme="dark"] .zipper-grip span {
+  background: #8da2be;
+}
+
+/* 4. Responsive */
+@media (max-width: 650px) {
+  .conversation {
+    height: 600px;
+    min-height: 500px;
+  }
+  .theme-select {
+    margin-right: 8px;
+    gap: 2px;
+  }
+  .theme-select select {
+    font-size: 10px;
+    max-width: 90px;
+  }
+  .breadcrumb {
+    margin-right: 4px;
+  }
+  .messages {
+    padding: 16px;
+  }
+}

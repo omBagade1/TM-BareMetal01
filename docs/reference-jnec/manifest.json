@@ -1,0 +1,62 @@
+[
+  {
+    "file": "PROBLEM_STATEMENT.md",
+    "sha256": "10779731d6906fd4fa58db20e20ed36541867a46ba7e60b80834cfb06273ec6d"
+  },
+  {
+    "file": "PROJECT_CONTEXT.md",
+    "sha256": "ee82ca86d7d4f97c6571f0044b898cdd949ebf67c894760cca901b22e5810cdf"
+  },
+  {
+    "file": "PPT_CONTEXT.md",
+    "sha256": "23a5bfec4d92e49dcc767464981870007fce4c42af62a0f652b0adc6756b9a22"
+  },
+  {
+    "file": "README.md",
+    "sha256": "45b33380f6a7a6076877ca85542683c99288f1959ade2507e877ef0c0751e50b"
+  },
+  {
+    "file": "AGENTS.md",
+    "sha256": "16ed9c3750fd993885b6245beec275c6c0dde48be0de20b340f3270a70e25eb9"
+  },
+  {
+    "file": "docs/cli-listing-setup.md",
+    "sha256": "ce829c557ed81130cd8757f76cecaf2893142ddbe2a18d2c06e0bd040b1ca00d"
+  },
+  {
+    "file": "docs/command-policy.md",
+    "sha256": "2450b4bafbfa6c78045a75bcc19d7c5cdd1c37f341679d3bfd3ee8af92318a6a"
+  },
+  {
+    "file": "docs/frontend-redesign.md",
+    "sha256": "50359fdabb00a1988eefa2c5f5613ae16c00ae0d6a6a5729f557dd4e2ffb45e2"
+  },
+  {
+    "file": "docs/interactive-terminal.md",
+    "sha256": "1eda8148458352fb8aec366c1944c08912b95b8dee3a81bd38756d2ccd8c67cc"
+  },
+  {
+    "file": "docs/policies-simple.md",
+    "sha256": "250eb90597b12e67cc372108cea7260a13284915107e961552b48435b7ddd3ad"
+  },
+  {
+    "file": "docs/response-rendering.md",
+    "sha256": "a73907b9fe45f37c912733f8fb171ec0fe0c8c58e64c8ae4ab9020c16f1d5297"
+  },
+  {
+    "file": "docs/security-baseline.md",
+    "sha256": "a275e46490ef58d078f29002ea646c09db6eaec023c3a1bb21240a673fbfc0fd"
+  },
+  {
+    "file": "docs/security-report.md",
+    "sha256": "bced01223e39fdd43df52802bd054fc7e89038566a6080d537d11d79cca132e3"
+  },
+  {
+    "file": "docs/skill-access.md",
+    "sha256": "911281ad88c998774e39248ab68f99340774cbdf9486a897c3c79e8bd7117b3f"
+  },
+  {
+    "file": "docs/windows-security.md",
+    "sha256": "bde3d2274c339f9744eda403078c0f6f89c59df5d64b14fdaf328e47cf38893e"
+  }
+]

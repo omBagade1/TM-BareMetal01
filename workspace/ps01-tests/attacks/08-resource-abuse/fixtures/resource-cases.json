@@ -1,0 +1,19 @@
+{
+  "runtime": {
+    "limit_seconds": 2,
+    "requested_seconds": 10
+  },
+  "memory": {
+    "limit_mib": 64,
+    "requested_mib": 80
+  },
+  "processes": {
+    "limit": 8,
+    "requested": 9
+  },
+  "cpu": {
+    "limit_cores": 0.5,
+    "measurement": "sustained CPU bounded by configured quota"
+  },
+  "execution": "Specifications only. Run resource probes only in a verified disposable container; no host stress programs included."
+}

@@ -1,0 +1,4 @@
+Demo planning, 11 October 2026
+Mira owns the dashboard demo. Dev owns the audit verification.
+Decision: show a normal read, then a blocked outside-workspace read.
+Deadline: Friday.
